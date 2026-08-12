@@ -334,6 +334,33 @@
     const DEFAULT_ON   = ["PAIRED_SCENARIO_1", "PAIRED_SCENARIO_10"];
     const META_SOURCE  = "PAIRED_SCENARIO_1";   // any layer: dropdown lists are identical
 
+    // ---- EXIOMOD regions: 17 aggregates over the 231 BACI countries ----
+    const REGIONS = {"CHN":["CHN"],"EUBA":["EST","LTU","LVA"],"EUBE":["BEL","LUX","NLD"],"EUCN":["CSK","CZE","POL","SVK"],"EUCS":["HRV","HUN","SVN"],"EUDE":["AUT","DDR","DEU"],"EUEA":["BGR","ROU"],"EUFR":["FRA","IRL"],"EUNO":["DNK","FIN","SWE"],"EUSE":["CYP","GRC","MLT"],"EUSW":["ESP","ITA","PRT"],"RWA":["AFG","ASM","AUS","BGD","BRN","BTN","CCK","COK","CXR","FJI","FSM","GUM","HKG","IDN","IND","IOT","IRN","JPN","KAZ","KGZ","KHM","KIR","KOR","LAO","LKA","MAC","MDV","MHL","MMR","MNG","MNP","MYS","NCL","NFK","NIU","NPL","NRU","NZL","PAK","PCN","PHL","PLW","PNG","PRK","PYF","RUS","SGP","SLB","SUN","THA","TJK","TKL","TKM","TLS","TON","TUV","UZB","VNM","VUT","WLF","WSM"],"RWE":["ALB","AND","BIH","BLR","CHE","GBR","GIB","ISL","MDA","MKD","MNE","NOR","SCG","SMR","SRB","UKR"],"RWF":["AGO","ATF","BDI","BEN","BFA","BWA","CAF","CIV","CMR","COD","COG","COM","CPV","DJI","DZA","EGY","ERI","ETH","GAB","GHA","GIN","GMB","GNB","GNQ","KEN","LBR","LBY","LSO","MAR","MDG","MLI","MOZ","MRT","MUS","MWI","MYT","NAM","NER","NGA","RWA","SDN","SEN","SHN","SLE","SOM","SSD","STP","SWZ","SYC","TCD","TGO","TUN","TZA","UGA","ZAF","ZMB","ZWE"],"RWM":["ARE","ARM","AZE","BHR","GEO","IRQ","ISR","JOR","KWT","LBN","OMN","PSE","QAT","SAU","SYR","TUR","YEM"],"RWNA":["BMU","CAN","GRL","SPM","USA"],"RWSA":["ABW","AIA","ANT","ARG","ATG","BES","BHS","BLM","BLZ","BOL","BRA","BRB","CHL","COL","CRI","CUB","CUW","CYM","DMA","DOM","ECU","FLK","GRD","GTM","GUY","HND","HTI","JAM","KNA","LCA","MEX","MSR","NIC","PAN","PER","PRY","SLV","SUR","SXM","TCA","TTO","URY","VCT","VEN","VGB"]};
+
+    const REGION_LABEL = {
+      CHN: "China", EUBA: "EU Baltic", EUBE: "EU Benelux", EUCN: "EU Central-North",
+      EUCS: "EU Central-South", EUDE: "EU Germany & Austria", EUEA: "EU East",
+      EUFR: "EU France & Ireland", EUNO: "EU Nordic", EUSE: "EU South-East",
+      EUSW: "EU South-West", RWA: "RoW Asia-Pacific", RWE: "RoW Europe",
+      RWF: "RoW Africa", RWM: "RoW Middle East", RWNA: "RoW North America",
+      RWSA: "RoW South America"
+    };
+    const EU_REGION_KEYS = Object.keys(REGIONS).filter(r => r.startsWith("EU"));
+    const isRegion = v => Object.prototype.hasOwnProperty.call(REGIONS, v);
+    // members present in this dataset only
+    function regionMembers(r, universe) {
+      const set = new Set(universe || []);
+      const m = REGIONS[r] || [];
+      return set.size ? m.filter(c => set.has(c)) : m;
+    }
+    // resolve a dropdown value to the list of countries it stands for
+    function resolveCountries(v, universe) {
+      if (v === "All") return null;                    // null = no filter
+      if (v === "EU27") return EU_REGION_KEYS.flatMap(r => regionMembers(r, universe));
+      if (isRegion(v)) return regionMembers(v, universe);
+      return [v];
+    }
+
     // ---- analytical product groups, aggregated in-browser from HS6 ----
     const ANALYTICAL_GROUPS = {
       grp_fuels:  { label: "Fuels & feedstocks (HS 27)",      test: k => k.slice(0,2) === "27" },
@@ -555,9 +582,23 @@
     }
     document.addEventListener("click", e => { if (!e.target.closest(".dropdown")) closeAllDropdowns(); });
 
+    function regionItems(universe) {
+      const items = [{ value: "EU27", label: "\u25c6 EU aggregate (all EU regions)" }];
+      Object.keys(REGIONS).sort().forEach(r => {
+        const n = regionMembers(r, universe).length;
+        if (!n) return;
+        items.push({ value: r, label: `\u25c6 ${r} \u2014 ${REGION_LABEL[r] || r} (${n})` });
+      });
+      return items;
+    }
+
     function initDropdowns() {
-      const expItems = (META.exporters || ["All"]).map(v => ({ value: v, label: v }));
-      const impItems = (META.importers || ["All"]).map(v => ({ value: v, label: v }));
+      const expUniverse = (META.exporters || []).filter(v => v !== "All");
+      const impUniverse = (META.importers || []).filter(v => v !== "All");
+      const expCountries = expUniverse.map(v => ({ value: v, label: v }));
+      const impCountries = impUniverse.map(v => ({ value: v, label: v }));
+      const expItems = [{ value: "All", label: "All" }, ...regionItems(expUniverse), ...expCountries];
+      const impItems = [{ value: "All", label: "All" }, ...regionItems(impUniverse), ...impCountries];
       const baseProd = (META.products || [{ k:"All", label:"All" }]).map(p => ({ value: p.k, label: p.label }));
       const grpItems = Object.keys(ANALYTICAL_GROUPS).map(g => ({ value: g, label: "▸ " + ANALYTICAL_GROUPS[g].label }));
       const prodItems = baseProd.length ? [baseProd[0], ...grpItems, ...baseProd.slice(1)] : grpItems;
@@ -604,20 +645,35 @@
     }
 
     // ---------- series selection ----------
+    // sum a keyed block (exporter / importer) over a list of member countries
+    function sumOverKeys(block, keys) {
+      if (!block || !keys) return { y: [], v: [] };
+      return sumCompact(keys.map(k => block[k]).filter(Boolean));
+    }
+    function summarySide(small, side, sel, universe, which) {
+      const block = small?.[side]?.[which];
+      if (!block) return { y: [], v: [] };
+      if (!isRegion(sel) && sel !== "EU27") return block[sel] || { y: [], v: [] };
+      return sumOverKeys(block, resolveCountries(sel, universe));
+    }
     function summaryHist(small, exp, imp, prod) {
       if (!small) return [];
+      const eu = (META.exporters || []).filter(v => v !== "All");
+      const iu = (META.importers || []).filter(v => v !== "All");
       if (exp === "All" && imp === "All" && prod === "All") return toHist(small.global?.hist);
-      if (exp !== "All" && imp === "All" && prod === "All") return toHist(small.exporter?.hist?.[exp]);
-      if (exp === "All" && imp !== "All" && prod === "All") return toHist(small.importer?.hist?.[imp]);
+      if (exp !== "All" && imp === "All" && prod === "All") return toHist(summarySide(small, "exporter", exp, eu, "hist"));
+      if (exp === "All" && imp !== "All" && prod === "All") return toHist(summarySide(small, "importer", imp, iu, "hist"));
       if (exp === "All" && imp === "All" && isGroup(prod))  return toHist(aggregateGroup(small.product?.hist, prod));
       if (exp === "All" && imp === "All" && prod !== "All") return toHist(small.product?.hist?.[String(prod)]);
       return [];
     }
     function summaryFore(small, exp, imp, prod) {
       if (!small) return [];
+      const eu = (META.exporters || []).filter(v => v !== "All");
+      const iu = (META.importers || []).filter(v => v !== "All");
       if (exp === "All" && imp === "All" && prod === "All") return toFore(small.global?.corr);
-      if (exp !== "All" && imp === "All" && prod === "All") return toFore(small.exporter?.corr?.[exp]);
-      if (exp === "All" && imp !== "All" && prod === "All") return toFore(small.importer?.corr?.[imp]);
+      if (exp !== "All" && imp === "All" && prod === "All") return toFore(summarySide(small, "exporter", exp, eu, "corr"));
+      if (exp === "All" && imp !== "All" && prod === "All") return toFore(summarySide(small, "importer", imp, iu, "corr"));
       if (exp === "All" && imp === "All" && isGroup(prod))  return toFore(aggregateGroup(small.product?.corr, prod));
       if (exp === "All" && imp === "All" && prod !== "All") return toFore(small.product?.corr?.[String(prod)]);
       return [];
@@ -636,15 +692,38 @@
     }
     async function exporterToWorld(modelKey, exporter, prod) {
       const hParts = [], cParts = [];
+      const expUniverse = (META.exporters || []).filter(x => x !== "All");
       const importers = (META.importers || []).filter(x => x !== "All");
-      await Promise.all(importers.map(async imp => {
-        const pd = await loadPairFile(modelKey, exporter, imp);
-        if (!pd || pd.__missing) return;
-        const { hist, forecast } = pairSeries(pd, prod);
-        if (hist.length)     hParts.push({ y: hist.map(d => d.t),     v: hist.map(d => d.value / TRADE_SCALE) });
-        if (forecast.length) cParts.push({ y: forecast.map(d => d.t), v: forecast.map(d => d.pred / TRADE_SCALE) });
-      }));
+      const exporters = resolveCountries(exporter, expUniverse) || [];
+      for (const e of exporters) {
+        await Promise.all(importers.map(async imp => {
+          const pd = await loadPairFile(modelKey, e, imp);
+          if (!pd || pd.__missing) return;
+          const { hist, forecast } = pairSeries(pd, prod);
+          if (hist.length)     hParts.push({ y: hist.map(d => d.t),     v: hist.map(d => d.value / TRADE_SCALE) });
+          if (forecast.length) cParts.push({ y: forecast.map(d => d.t), v: forecast.map(d => d.pred / TRADE_SCALE) });
+        }));
+      }
       return { hist: toHist(sumCompact(hParts)), forecast: toFore(sumCompact(cParts)) };
+    }
+
+    // region <-> region or region <-> country: sum the member cross-product
+    async function pairAggregate(modelKey, exp, imp, prod) {
+      const expUniverse = (META.exporters || []).filter(x => x !== "All");
+      const impUniverse = (META.importers || []).filter(x => x !== "All");
+      const es = resolveCountries(exp, expUniverse) || [];
+      const is = resolveCountries(imp, impUniverse) || [];
+      const hParts = [], cParts = [];
+      for (const e of es) {
+        await Promise.all(is.map(async i => {
+          const pd = await loadPairFile(modelKey, e, i);
+          if (!pd || pd.__missing) return;
+          const { hist, forecast } = pairSeries(pd, prod);
+          if (hist.length)     hParts.push({ y: hist.map(d => d.t),     v: hist.map(d => d.value / TRADE_SCALE) });
+          if (forecast.length) cParts.push({ y: forecast.map(d => d.t), v: forecast.map(d => d.pred / TRADE_SCALE) });
+        }));
+      }
+      return { hist: toHist(sumCompact(hParts)), forecast: toFore(sumCompact(cParts)), n: es.length * is.length };
     }
 
     async function getSelectedSeries() {
@@ -682,11 +761,19 @@
       }
 
       if (exp !== "All" && imp !== "All") {
+        const aggregated = isRegion(exp) || isRegion(imp) || exp === "EU27" || imp === "EU27";
         let hp = [];
         for (const k of models) {
-          const pd = await loadPairFile(k, exp, imp);
-          if (!pd || pd.__missing) { missing.push(`${MODEL_CONFIG[k].label} (${pd?.__error || "no file"})`); continue; }
-          const { hist: mh, forecast } = pairSeries(pd, prod);
+          let mh, forecast;
+          if (aggregated) {
+            const r = await pairAggregate(k, exp, imp, prod);
+            mh = r.hist; forecast = r.forecast;
+            if (!mh.length && !forecast.length) { missing.push(`${MODEL_CONFIG[k].label} (no pair files)`); continue; }
+          } else {
+            const pd = await loadPairFile(k, exp, imp);
+            if (!pd || pd.__missing) { missing.push(`${MODEL_CONFIG[k].label} (${pd?.__error || "no file"})`); continue; }
+            ({ hist: mh, forecast } = pairSeries(pd, prod));
+          }
           if (!hp.length && mh.length) hp = mh;
           const f = addConnector(hist.length ? hist : mh, forecast);
           if (f.length) forecasts.push({ key: k, label: MODEL_CONFIG[k].label, color: MODEL_CONFIG[k].color, series: f });
@@ -703,7 +790,30 @@
       const tag = MODEL_CONFIG[models[0]]?.tag;
       const idx = FEATURES[tag];
       if (!idx) return [];
-      const pick = c => c === "All" ? idx.avgSeries : (idx.countryMap[c] || []);
+      const pick = c => {
+        if (c === "All") return idx.avgSeries;
+        if (isRegion(c) || c === "EU27") {
+          const members = (resolveCountries(c, Object.keys(idx.countryMap)) || [])
+            .filter(m => idx.countryMap[m]);
+          if (!members.length) return [];
+          const acc = {};
+          members.forEach(m => idx.countryMap[m].forEach(r => {
+            if (!acc[r.t]) acc[r.t] = { t: r.t, gdp: [0,0], gdpcap: [0,0], pop: [0,0], co2_pc: [0,0] };
+            ["gdp","gdpcap","pop","co2_pc"].forEach(f => {
+              if (r[f] !== null && r[f] !== undefined) { acc[r.t][f][0] += r[f]; acc[r.t][f][1] += 1; }
+            });
+          }));
+          // GDP and population sum over a region; per-capita measures average
+          return Object.values(acc).map(d => ({
+            t: d.t,
+            gdp:    d.gdp[1]    ? d.gdp[0]                : null,
+            pop:    d.pop[1]    ? d.pop[0]                : null,
+            gdpcap: d.gdpcap[1] ? d.gdpcap[0]/d.gdpcap[1] : null,
+            co2_pc: d.co2_pc[1] ? d.co2_pc[0]/d.co2_pc[1] : null
+          })).sort((a,b) => a.t - b.t);
+        }
+        return idx.countryMap[c] || [];
+      };
       const expS = pick(exp), impS = pick(imp);
       const eL = exp === "All" ? "Exp avg" : exp, iL = imp === "All" ? "Imp avg" : imp;
       const mk = (series, field, label, color, dash) => {
@@ -731,7 +841,15 @@
       const prodLabel = ANALYTICAL_GROUPS[prod]?.label || prodItem?.label || prod;
 
       try {
-        setStatus("Updating chart&hellip;");
+        const eU = (META.exporters || []).filter(v => v !== "All");
+        const iU = (META.importers || []).filter(v => v !== "All");
+        const nE = (isRegion(exp) || exp === "EU27") ? (resolveCountries(exp, eU) || []).length : 1;
+        const nI = (isRegion(imp) || imp === "EU27") ? (resolveCountries(imp, iU) || []).length : 1;
+        const heavy = (exp !== "All" && imp !== "All" && nE * nI > 200) ||
+                      (imp === "All" && prod !== "All" && nE > 20);
+        setStatus(heavy
+          ? `Aggregating a large region (${nE} \u00d7 ${nI} pairs) &mdash; this may take a moment&hellip;`
+          : "Updating chart&hellip;");
         const { hist, forecasts, mode, missing } = await getSelectedSeries();
         const traces = [];
 
@@ -757,12 +875,20 @@
           hovermode: "x unified"
         }, { responsive: true, displayModeBar: true });
 
+        const expU = (META.exporters || []).filter(v => v !== "All");
+        const impU = (META.importers || []).filter(v => v !== "All");
+        const regNote = [
+          (isRegion(exp) || exp === "EU27") ? `${exp} = ${(resolveCountries(exp, expU) || []).length} exporters` : null,
+          (isRegion(imp) || imp === "EU27") ? `${imp} = ${(resolveCountries(imp, impU) || []).length} importers` : null
+        ].filter(Boolean).join(", ");
+
         const names = models.map(k => MODEL_CONFIG[k].label).join(", ");
         const miss = missing.length ? `<br>Missing: <strong>${missing.join(" | ")}</strong>` : "";
         const modeLabel = { summary: "Summary view", pair: "Pair view",
                             "exporter-world": "Exports to world", empty: "No data" }[mode] || mode;
         setStatus(`${modeLabel}: <strong>${exp}</strong> → <strong>${imp}</strong> | <strong>${prodLabel}</strong>` +
-                  `<br>Layers: <strong>${names}</strong>${miss}`);
+                  `<br>Layers: <strong>${names}</strong>` +
+                  (regNote ? `<br>Aggregated: <strong>${regNote}</strong>` : "") + miss);
       } catch (err) {
         console.error("Render error:", err);
         setStatus(`Runtime error: <strong>${err.message}</strong>`);
