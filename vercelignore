@@ -1,0 +1,8 @@
+# analysis artefacts, not part of the site
+*.ipynb
+*.py
+*.docx
+*.xlsx
+*.zip
+.git
+__pycache__

@@ -1,0 +1,110 @@
+{
+  "model_tags": [
+    "paired_scenario_1",
+    "paired_scenario_6",
+    "paired_scenario_6_low_bio",
+    "paired_scenario_8",
+    "paired_scenario_10",
+    "paired_scenario_15",
+    "base",
+    "co2_only",
+    "gdp_only"
+  ],
+  "gdp_reference": "Scenario_10",
+  "estimation_tiam": "Scenario_10",
+  "milestones": [
+    2025,
+    2030,
+    2035,
+    2040,
+    2045,
+    2050,
+    2055,
+    2060,
+    2065,
+    2070
+  ],
+  "models": {
+    "paired_scenario_1": {
+      "gdp_scenario": "Scenario_1",
+      "gdp_overlay": true,
+      "co2_channel": true,
+      "tiam_scenario": "Scenario_1",
+      "color": "#15803d",
+      "small": "trade_dashboard_small_paired_scenario_1.json.gz",
+      "flows": "data_paired_scenario_1/flows"
+    },
+    "paired_scenario_6": {
+      "gdp_scenario": "Scenario_6",
+      "gdp_overlay": true,
+      "co2_channel": true,
+      "tiam_scenario": "Scenario_6",
+      "color": "#15803d",
+      "small": "trade_dashboard_small_paired_scenario_6.json.gz",
+      "flows": "data_paired_scenario_6/flows"
+    },
+    "paired_scenario_6_low_bio": {
+      "gdp_scenario": "Scenario_6_low_bio",
+      "gdp_overlay": true,
+      "co2_channel": true,
+      "tiam_scenario": "Scenario_6_low_bio",
+      "color": "#15803d",
+      "small": "trade_dashboard_small_paired_scenario_6_low_bio.json.gz",
+      "flows": "data_paired_scenario_6_low_bio/flows"
+    },
+    "paired_scenario_8": {
+      "gdp_scenario": "Scenario_8",
+      "gdp_overlay": true,
+      "co2_channel": true,
+      "tiam_scenario": "Scenario_8",
+      "color": "#15803d",
+      "small": "trade_dashboard_small_paired_scenario_8.json.gz",
+      "flows": "data_paired_scenario_8/flows"
+    },
+    "paired_scenario_10": {
+      "gdp_scenario": "Scenario_10",
+      "gdp_overlay": true,
+      "co2_channel": true,
+      "tiam_scenario": "Scenario_10",
+      "color": "#15803d",
+      "small": "trade_dashboard_small_paired_scenario_10.json.gz",
+      "flows": "data_paired_scenario_10/flows"
+    },
+    "paired_scenario_15": {
+      "gdp_scenario": "Scenario_15",
+      "gdp_overlay": true,
+      "co2_channel": true,
+      "tiam_scenario": "Scenario_15",
+      "color": "#15803d",
+      "small": "trade_dashboard_small_paired_scenario_15.json.gz",
+      "flows": "data_paired_scenario_15/flows"
+    },
+    "base": {
+      "gdp_scenario": "Scenario_10",
+      "gdp_overlay": false,
+      "co2_channel": false,
+      "tiam_scenario": "Scenario_10",
+      "color": "#64748b",
+      "small": "trade_dashboard_small_base.json.gz",
+      "flows": "data_base/flows"
+    },
+    "co2_only": {
+      "gdp_scenario": "Scenario_10",
+      "gdp_overlay": false,
+      "co2_channel": true,
+      "tiam_scenario": "Scenario_1",
+      "color": "#c2410c",
+      "small": "trade_dashboard_small_co2_only.json.gz",
+      "flows": "data_co2_only/flows"
+    },
+    "gdp_only": {
+      "gdp_scenario": "Scenario_1",
+      "gdp_overlay": true,
+      "co2_channel": false,
+      "tiam_scenario": "Scenario_10",
+      "color": "#0369a1",
+      "small": "trade_dashboard_small_gdp_only.json.gz",
+      "flows": "data_gdp_only/flows"
+    }
+  }
+}
